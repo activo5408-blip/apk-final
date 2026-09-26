@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Libro Mayor</string>
+    <string name="title_activity_main">Libro Mayor</string>
+    <string name="package_name">com.negocio.libromayor</string>
+    <string name="custom_url_scheme">com.negocio.libromayor</string>
+</resources>
