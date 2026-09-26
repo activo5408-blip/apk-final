@@ -36,6 +36,28 @@
     --font-mono: ui-monospace, 'SFMono-Regular', 'IBM Plex Mono', 'Courier New', monospace;
   }
 
+  :root[data-theme="dark"]{
+    --page-bg:#0b1120;
+    --card-bg:#141b2e;
+    --ink:#eef1f8;
+    --ink-soft:#9aa5c0;
+    --ink-faint:#6b7690;
+    --rule:#232c44;
+    --blue-soft:#152a4a;
+    --green-soft:#0f2a22;
+    --orange-soft:#3a2410;
+    --red-soft:#3a1616;
+    --purple-soft:#241a3d;
+    --shadow: 0 6px 20px rgba(0,0,0,0.45);
+    --shadow-lg: 0 16px 34px rgba(0,0,0,0.55);
+  }
+  :root[data-theme="dark"] .btn-outline{color:#7cc0ff;}
+  :root[data-theme="dark"] .tag-usd{color:#7cc0ff;}
+  :root[data-theme="dark"] .tag-mn, :root[data-theme="dark"] .tag-pend, :root[data-theme="dark"] .tag-pendiente{color:#ffb570;}
+  :root[data-theme="dark"] .tag-vend, :root[data-theme="dark"] .tag-activo{color:#5fd6a8;}
+  :root[data-theme="dark"] .tag-cancelado{color:#ff8f8f;}
+  :root[data-theme="dark"] input, :root[data-theme="dark"] select, :root[data-theme="dark"] textarea{ color-scheme: dark; }
+
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   svg.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block;flex-shrink:0;}
   html,body{height:100%;}
@@ -684,22 +706,10 @@
       <div class="settings-group">
         <div class="grp-label">General</div>
         <div class="settings-list">
-          <div class="settings-row">
+          <div class="settings-row" id="row-datos-empresa">
             <div class="s-icon"><svg class="ic"><use href="#ic-briefcase"/></svg></div>
-            <div class="s-body"><div class="t">Datos de la empresa</div><div class="s">Editar información de tu negocio</div></div>
+            <div class="s-body"><div class="t">Datos de la empresa</div><div class="s" id="resumen-empresa">Editar información de tu negocio</div></div>
             <svg class="ic chev"><use href="#ic-back" style="transform:rotate(180deg)"/></svg>
-          </div>
-          <div class="settings-row">
-            <div class="s-icon"><svg class="ic"><use href="#ic-percent"/></svg></div>
-            <div class="s-body"><div class="t">Impuestos</div><div class="s">Configurar impuestos y tasas</div></div>
-          </div>
-          <div class="settings-row">
-            <div class="s-icon"><svg class="ic"><use href="#ic-dollar"/></svg></div>
-            <div class="s-body"><div class="t">Moneda</div><div class="s">Seleccionar moneda del sistema</div></div>
-          </div>
-          <div class="settings-row">
-            <div class="s-icon"><svg class="ic"><use href="#ic-bell"/></svg></div>
-            <div class="s-body"><div class="t">Notificaciones</div><div class="s">Alertas y recordatorios</div></div>
           </div>
         </div>
       </div>
@@ -707,26 +717,15 @@
       <div class="settings-group">
         <div class="grp-label">Preferencias</div>
         <div class="settings-list">
-          <div class="settings-row">
+          <div class="settings-row" style="cursor:default;">
             <div class="s-icon"><svg class="ic"><use href="#ic-palette"/></svg></div>
-            <div class="s-body"><div class="t">Tema</div><div class="s">Claro / Oscuro / Automático</div></div>
+            <div class="s-body"><div class="t">Tema</div><div class="s">Claro, oscuro o según tu dispositivo</div></div>
+            <select id="sel-tema" style="width:auto; padding:8px 10px; font-size:12.5px;">
+              <option value="claro">Claro</option>
+              <option value="oscuro">Oscuro</option>
+              <option value="auto">Automático</option>
+            </select>
           </div>
-          <div class="settings-row">
-            <div class="s-icon"><svg class="ic"><use href="#ic-globe"/></svg></div>
-            <div class="s-body"><div class="t">Idioma</div><div class="s">Español</div></div>
-          </div>
-          <div class="settings-row">
-            <div class="s-icon"><svg class="ic"><use href="#ic-refresh"/></svg></div>
-            <div class="s-body"><div class="t">Respaldos automáticos</div><div class="s">Recuerda exportar seguido</div></div>
-            <label class="switch"><input type="checkbox" checked disabled><span class="track"></span></label>
-          </div>
-        </div>
-      </div>
-
-      <div class="settings-group">
-        <div class="grp-label">Parámetros por lote</div>
-        <div class="panel">
-          <div class="panel-sub">La tasa de cambio, el costo de flete y la distribución de la ganancia ya no son globales: se definen al crear cada lote y quedan asociados a ese lote. Al agregar un producto a un lote, estos parámetros se aplican automáticamente a sus cálculos.</div>
         </div>
       </div>
 
@@ -789,7 +788,7 @@
         <div class="b-body">
           <div class="t">Imprimir reporte</div>
           <div class="s">Genera una vista de impresión limpia del panel general.</div>
-          <button class="btn btn-outline btn-block" id="btn-imprimir" onclick="window.print()">Imprimir panel</button>
+          <button class="btn btn-outline btn-block" id="btn-imprimir">Imprimir panel</button>
         </div>
       </div>
 
@@ -801,8 +800,7 @@
   <nav class="bottom-nav">
     <div class="bottom-nav-inner">
       <button class="navbtn active" data-view="dashboard"><span class="navbtn-ic"><svg class="ic"><use href="#ic-home"/></svg></span>Inicio</button>
-      <button class="navbtn" data-view="compras"><span class="navbtn-ic"><svg class="ic"><use href="#ic-box"/></svg></span>Inventario</button>
-      <button class="navbtn" data-view="compras"><span class="navbtn-ic"><svg class="ic"><use href="#ic-cart"/></svg></span>Compras</button>
+      <button class="navbtn" data-view="compras"><span class="navbtn-ic"><svg class="ic"><use href="#ic-box"/></svg></span>Inventario &amp; Compras</button>
       <button class="navbtn" data-view="lotes"><span class="navbtn-ic"><svg class="ic"><use href="#ic-layers"/></svg></span>Lotes</button>
       <button type="button" class="navbtn" id="btn-nav-mas"><span class="navbtn-ic"><svg class="ic"><use href="#ic-more"/></svg></span>Más</button>
       <!-- botones ocultos: permiten navegar mediante irA('config') / irA('respaldo') sin duplicar lógica -->
@@ -959,6 +957,45 @@
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="btn-cancelar-lote">Cancelar</button>
         <button type="submit" class="btn btn-brass">Guardar lote</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Confirmación (reemplaza confirm() nativo, que no aparece dentro de la app Android) ===== -->
+<div class="overlay" id="overlay-confirmar">
+  <div class="modal" style="max-width:420px; border-radius:22px;">
+    <h3 id="confirmar-titulo">¿Confirmar acción?</h3>
+    <p id="confirmar-mensaje" style="font-size:13.5px; color:var(--ink-soft); line-height:1.5; margin:0 0 4px;"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="confirmar-cancelar">Cancelar</button>
+      <button type="button" class="btn" id="confirmar-aceptar" style="background:var(--red); color:#fff;">Borrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Editar datos de la empresa ===== -->
+<div class="overlay" id="overlay-empresa">
+  <div class="modal">
+    <h3>Datos de la empresa</h3>
+    <form id="form-empresa">
+      <div class="form-grid">
+        <div class="field full">
+          <label>Nombre del negocio</label>
+          <input type="text" id="e-nombre" placeholder="Ej: Mi Negocio">
+        </div>
+        <div class="field full">
+          <label>Propietario / contacto (opcional)</label>
+          <input type="text" id="e-propietario" placeholder="Ej: Juan Pérez">
+        </div>
+        <div class="field full">
+          <label>Teléfono (opcional)</label>
+          <input type="text" id="e-telefono" placeholder="Ej: 555-123-4567">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="btn-cancelar-empresa">Cancelar</button>
+        <button type="submit" class="btn btn-brass">Guardar</button>
       </div>
     </form>
   </div>
@@ -1246,6 +1283,35 @@
   /* ---------- Fecha en la cabecera del panel ---------- */
   document.getElementById("hero-fecha").textContent = new Date().toLocaleDateString("es", {day:"2-digit", month:"short", year:"numeric"});
 
+  /* ---------- Confirmación propia (los diálogos confirm() nativos no se
+     muestran dentro del WebView de la app Android empaquetada) ---------- */
+  function confirmarAccion(mensaje, opciones){
+    opciones = opciones || {};
+    return new Promise(function(resolve){
+      var overlay = document.getElementById("overlay-confirmar");
+      document.getElementById("confirmar-titulo").textContent = opciones.titulo || "¿Confirmar acción?";
+      document.getElementById("confirmar-mensaje").textContent = mensaje;
+      var btnAceptar = document.getElementById("confirmar-aceptar");
+      btnAceptar.textContent = opciones.textoBoton || "Borrar";
+      overlay.classList.add("active");
+
+      function limpiar(valor){
+        overlay.classList.remove("active");
+        btnAceptar.removeEventListener("click", onAceptar);
+        btnCancelar.removeEventListener("click", onCancelar);
+        overlay.removeEventListener("click", onFondo);
+        resolve(valor);
+      }
+      function onAceptar(){ limpiar(true); }
+      function onCancelar(){ limpiar(false); }
+      function onFondo(e){ if(e.target === overlay) limpiar(false); }
+      var btnCancelar = document.getElementById("confirmar-cancelar");
+      btnAceptar.addEventListener("click", onAceptar);
+      btnCancelar.addEventListener("click", onCancelar);
+      overlay.addEventListener("click", onFondo);
+    });
+  }
+
   /* ---------- Botones sueltos de las cabeceras ---------- */
   document.getElementById("btn-hero-menu").addEventListener("click", function(){ sheetMas.classList.add("active"); });
   document.getElementById("btn-topbar-search").addEventListener("click", function(){
@@ -1455,9 +1521,10 @@
       b.addEventListener("click", function(e){ e.stopPropagation(); abrirModalCompra(b.getAttribute("data-edit")); });
     });
     cont.querySelectorAll("[data-del]").forEach(function(b){
-      b.addEventListener("click", function(e){
+      b.addEventListener("click", async function(e){
         e.stopPropagation();
-        if(confirm("¿Borrar este producto del inventario? Esta acción no se puede deshacer.")){
+        var ok = await confirmarAccion("¿Borrar este producto del inventario? Esta acción no se puede deshacer.");
+        if(ok){
           estado.items = estado.items.filter(function(it){ return it.id !== b.getAttribute("data-del"); });
           guardar();
           renderCompras();
@@ -1702,14 +1769,15 @@
       b.addEventListener("click", function(e){ e.stopPropagation(); abrirModalLote(b.getAttribute("data-editlote")); });
     });
     grid.querySelectorAll("[data-dellote]").forEach(function(b){
-      b.addEventListener("click", function(e){
+      b.addEventListener("click", async function(e){
         e.stopPropagation();
         var id = b.getAttribute("data-dellote");
         var c = calcularLote(id);
         var msg = c.items.length
           ? "Este lote tiene "+c.items.length+" producto(s). Se borrará el lote, pero los productos quedarán como 'Sin lote'. ¿Continuar?"
           : "¿Borrar este lote?";
-        if(confirm(msg)){
+        var ok = await confirmarAccion(msg);
+        if(ok){
           estado.items.forEach(function(it){ if(it.loteId === id) it.loteId = ""; });
           estado.lotes = estado.lotes.filter(function(l){ return l.id !== id; });
           guardar();
@@ -1824,9 +1892,10 @@
       b.addEventListener("click", function(e){ e.stopPropagation(); abrirModalCompra(b.getAttribute("data-edititem")); });
     });
     cont.querySelectorAll("[data-delitem]").forEach(function(b){
-      b.addEventListener("click", function(e){
+      b.addEventListener("click", async function(e){
         e.stopPropagation();
-        if(confirm("¿Borrar este producto del lote?")){
+        var ok = await confirmarAccion("¿Borrar este producto del lote?");
+        if(ok){
           estado.items = estado.items.filter(function(it){ return it.id !== b.getAttribute("data-delitem"); });
           guardar();
           renderLoteDetalle();
@@ -1998,12 +2067,74 @@
   document.getElementById("filtro-lote").addEventListener("change", renderCompras);
 
   /* ================= CONFIG ================= */
+  var TEMA_KEY = "libroMayor_tema_v1";
+
   function renderConfig(){
-    // Los parámetros de costo y ganancia se administran ahora dentro de cada lote.
+    var emp = (estado.config && estado.config.empresa) || {};
+    var resumen = document.getElementById("resumen-empresa");
+    resumen.textContent = emp.nombre ? emp.nombre : "Editar información de tu negocio";
+    var temaGuardado = "claro";
+    try{ temaGuardado = localStorage.getItem(TEMA_KEY) || "claro"; }catch(e){}
+    document.getElementById("sel-tema").value = temaGuardado;
   }
 
-  document.getElementById("btn-reset-todo").addEventListener("click", function(){
-    if(confirm("¿Seguro que quieres borrar TODOS los datos guardados en este navegador? Esta acción no se puede deshacer.")){
+  /* ---------- Tema (Claro / Oscuro / Automático) ---------- */
+  function aplicarTema(valor){
+    var modoOscuro = valor === "oscuro" || (valor === "auto" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.setAttribute("data-theme", modoOscuro ? "dark" : "light");
+  }
+  (function(){
+    var temaGuardado = "claro";
+    try{ temaGuardado = localStorage.getItem(TEMA_KEY) || "claro"; }catch(e){}
+    aplicarTema(temaGuardado);
+    if(window.matchMedia){
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){
+        var actual = "claro";
+        try{ actual = localStorage.getItem(TEMA_KEY) || "claro"; }catch(e){}
+        if(actual === "auto") aplicarTema("auto");
+      });
+    }
+  })();
+  document.getElementById("sel-tema").addEventListener("change", function(){
+    var v = this.value;
+    try{ localStorage.setItem(TEMA_KEY, v); }catch(e){}
+    aplicarTema(v);
+    mostrarToast("Tema actualizado");
+  });
+
+  /* ---------- Datos de la empresa ---------- */
+  var overlayEmpresa = document.getElementById("overlay-empresa");
+  var formEmpresa = document.getElementById("form-empresa");
+  document.getElementById("row-datos-empresa").addEventListener("click", function(){
+    var emp = (estado.config && estado.config.empresa) || {};
+    document.getElementById("e-nombre").value = emp.nombre || "";
+    document.getElementById("e-propietario").value = emp.propietario || "";
+    document.getElementById("e-telefono").value = emp.telefono || "";
+    overlayEmpresa.classList.add("active");
+  });
+  document.getElementById("btn-cancelar-empresa").addEventListener("click", function(){ overlayEmpresa.classList.remove("active"); });
+  overlayEmpresa.addEventListener("click", function(e){ if(e.target === overlayEmpresa) overlayEmpresa.classList.remove("active"); });
+  formEmpresa.addEventListener("submit", function(e){
+    e.preventDefault();
+    estado.config = estado.config || {};
+    estado.config.empresa = {
+      nombre: document.getElementById("e-nombre").value.trim(),
+      propietario: document.getElementById("e-propietario").value.trim(),
+      telefono: document.getElementById("e-telefono").value.trim()
+    };
+    guardar();
+    renderConfig();
+    overlayEmpresa.classList.remove("active");
+    mostrarToast("Datos de la empresa guardados");
+  });
+
+  /* ---------- Borrar todos los datos ---------- */
+  document.getElementById("btn-reset-todo").addEventListener("click", async function(){
+    var ok = await confirmarAccion(
+      "¿Seguro que quieres borrar TODOS los datos guardados en este dispositivo (productos, lotes y configuración)? Esta acción no se puede deshacer.",
+      {titulo:"Borrar todos los datos", textoBoton:"Sí, borrar todo"}
+    );
+    if(ok){
       localStorage.removeItem(STORAGE_KEY);
       estado = datosSemilla();
       prepararLotes(estado);
@@ -2128,6 +2259,29 @@
     guardarArchivoComo(blob, "inventario_" + hoy() + ".csv", {
       types:[{description:"CSV", accept:{"text/csv":[".csv"]}}]
     });
+  });
+
+  /* ---------- Imprimir ---------- */
+  document.getElementById("btn-imprimir").addEventListener("click", function(){
+    // Se imprime siempre el Panel General, sin importar en qué vista estés.
+    irA("dashboard");
+    setTimeout(async function(){
+      var esNativo = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      var PrintUtil = esNativo && window.Capacitor.Plugins && window.Capacitor.Plugins.PrintUtil;
+      if(PrintUtil){
+        try{
+          await PrintUtil.imprimir({ titulo: "Libro Mayor - Panel general" });
+          return;
+        }catch(err){
+          console.warn("No se pudo imprimir de forma nativa, probando window.print()", err);
+        }
+      }
+      if(window.print){
+        window.print();
+      } else {
+        mostrarToast("La impresión no está disponible en este dispositivo");
+      }
+    }, 150);
   });
 
   function descargarBlob(blob, filename){
