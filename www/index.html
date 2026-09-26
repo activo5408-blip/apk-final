@@ -2136,12 +2136,20 @@
     );
     if(ok){
       localStorage.removeItem(STORAGE_KEY);
-      estado = datosSemilla();
-      prepararLotes(estado);
+      estado = {
+        items: [],
+        lotes: [],
+        gastos: [],
+        config: {
+          costoPorLibra: 0,
+          tasas: [],
+          distribucion: {reinversion:70, banco:20, home:10}
+        }
+      };
       guardar();
       poblarSelectLotes();
       renderDashboard(); renderCompras(); renderLotes(); renderConfig();
-      mostrarToast("Datos reiniciados");
+      mostrarToast("Todos los datos fueron borrados");
     }
   });
 
@@ -2209,21 +2217,45 @@
     var reader = new FileReader();
     reader.onload = function(ev){
       try{
-        var data = JSON.parse(ev.target.result);
-        if(!data.items || !data.config) throw new Error("Formato inválido");
-        estado = data;
-        estado.gastos = estado.gastos || [];
-        estado.lotes = estado.lotes || [];
-        prepararLotes(estado);
+        var texto = String(ev.target.result || "").replace(/^\uFEFF/, "").trim();
+        if(!texto) throw new Error("Archivo vacío");
+
+        var data = JSON.parse(texto);
+        if(!data || typeof data !== "object" || Array.isArray(data)) {
+          throw new Error("El respaldo no contiene un objeto");
+        }
+
+        if(!Array.isArray(data.items)) throw new Error("Falta la lista de productos");
+        if(data.lotes != null && !Array.isArray(data.lotes)) throw new Error("Lotes inválidos");
+        if(data.gastos != null && !Array.isArray(data.gastos)) throw new Error("Gastos inválidos");
+        if(!data.config || typeof data.config !== "object" || Array.isArray(data.config)) {
+          throw new Error("Falta la configuración del respaldo");
+        }
+
+        var importado = {
+          items: data.items,
+          lotes: Array.isArray(data.lotes) ? data.lotes : [],
+          gastos: Array.isArray(data.gastos) ? data.gastos : [],
+          config: data.config
+        };
+
+        prepararLotes(importado);
+        estado = importado;
         guardar();
+        poblarSelectLotes();
         renderDashboard(); renderCompras(); renderLotes(); renderConfig();
         mostrarToast("Respaldo restaurado con éxito");
       }catch(err){
-        mostrarToast("El archivo no es un respaldo válido");
+        console.warn("No se pudo importar el respaldo:", err);
+        mostrarToast("El archivo no es un respaldo válido. Selecciona un .json exportado por esta aplicación.");
       }
       e.target.value = "";
     };
-    reader.readAsText(file);
+    reader.onerror = function(){
+      mostrarToast("No se pudo leer el archivo seleccionado");
+      e.target.value = "";
+    };
+    reader.readAsText(file, "UTF-8");
   });
 
   document.getElementById("btn-export-csv").addEventListener("click", function(){
