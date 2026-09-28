@@ -2360,6 +2360,7 @@
     // Un respaldo con fotos puede superar el límite Binder y cerrar la app.
     // Se selecciona el destino y después se escriben bloques pequeños.
     if(FileSaver){
+      var guardadoNativo = false;
       try{
         var preparado = await FileSaver.saveFile({
           filename: filename,
@@ -2367,7 +2368,9 @@
         });
 
         if(preparado && preparado.saved){
-          var CHUNK_SIZE = 32 * 1024;
+          var CHUNK_SIZE = 16 * 1024;
+          var totalEnviado = 0;
+
           for(var offset = 0; offset < blob.size; offset += CHUNK_SIZE){
             var parte = blob.slice(offset, Math.min(offset + CHUNK_SIZE, blob.size));
             var base64Parte = await new Promise(function(resolve, reject){
@@ -2375,19 +2378,34 @@
               reader.onload = function(){
                 try{
                   var resultado = String(reader.result || "");
-                  resolve(resultado.split(",")[1] || "");
+                  var separador = resultado.indexOf(",");
+                  resolve(separador >= 0 ? resultado.slice(separador + 1) : "");
                 }catch(e){ reject(e); }
               };
-              reader.onerror = reject;
+              reader.onerror = function(){ reject(new Error("No se pudo leer el bloque del respaldo")); };
               reader.readAsDataURL(parte);
             });
 
-            if(!base64Parte) throw new Error("No se pudo leer un bloque del respaldo");
-            await FileSaver.writeFileChunk({data: base64Parte});
+            if(!base64Parte) throw new Error("Bloque vacío durante la exportación");
+
+            var escrito = await FileSaver.writeFileChunk({data: base64Parte});
+            var n = Number(escrito && escrito.written || 0);
+            if(n !== parte.size) throw new Error("Bloque incompleto: " + n + "/" + parte.size);
+            totalEnviado += n;
           }
 
-          await FileSaver.finishFile({});
-          mostrarToast("Archivo guardado correctamente (" + formatoTamano(blob.size) + ")");
+          if(totalEnviado !== blob.size){
+            throw new Error("Respaldo incompleto: " + totalEnviado + "/" + blob.size + " bytes");
+          }
+
+          var terminado = await FileSaver.finishFile({});
+          var totalGuardado = Number(terminado && terminado.bytes || 0);
+          if(totalGuardado !== blob.size){
+            throw new Error("El archivo final no coincide: " + totalGuardado + "/" + blob.size + " bytes");
+          }
+
+          guardadoNativo = true;
+          mostrarToast("Respaldo guardado correctamente (" + formatoTamano(blob.size) + ")");
           return "guardado";
         }
 
@@ -2397,8 +2415,8 @@
         try{
           if(FileSaver.cancelFile) await FileSaver.cancelFile({});
         }catch(ignore){}
-        console.error("Falló el guardado nativo por bloques:", err);
-        mostrarToast("No se pudo guardar en la carpeta elegida");
+        console.error("Falló el guardado nativo:", err);
+        if(!guardadoNativo) mostrarToast("No se pudo guardar el respaldo: " + (err.message || err));
         return "cancelado";
       }
     }
