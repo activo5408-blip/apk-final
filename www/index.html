@@ -2201,14 +2201,25 @@
     }
   }
 
-  document.getElementById("btn-export-json").addEventListener("click", function(){
-    var json = JSON.stringify(estado, null, 2);
-    var blob = new Blob([json], {type:"application/json"});
-    guardarArchivoComo(blob, "respaldo_negocio_" + hoy() + ".json", {
-      types:[{description:"Respaldo JSON", accept:{"application/json":[".json"]}}]
-    }).then(function(resultado){
-      if(resultado === "guardado") guardarMetaRespaldo(blob.size);
-    });
+  document.getElementById("btn-export-json").addEventListener("click", async function(){
+    try{
+      var json = JSON.stringify(estado, null, 2);
+      if(!json || json.length < 2) throw new Error("No se pudo generar el respaldo");
+
+      var blob = new Blob([json], {type:"application/json"});
+      if(blob.size <= 0) throw new Error("El respaldo quedó vacío");
+
+      var resultado = await guardarArchivoComo(blob, "respaldo_negocio_" + hoy() + ".json", {
+        types:[{description:"Respaldo JSON", accept:{"application/json":[".json"]}}]
+      });
+
+      if(resultado === "guardado" || resultado === "descargado"){
+        guardarMetaRespaldo(blob.size);
+      }
+    }catch(err){
+      console.error("Error creando respaldo:", err);
+      mostrarToast("No se pudo crear el respaldo. Tus datos no fueron borrados.");
+    }
   });
 
   document.getElementById("input-import-json").addEventListener("change", function(e){
@@ -2339,30 +2350,56 @@
   // Devuelve "guardado", "cancelado" o "descargado".
   async function guardarArchivoComo(blob, filename, opts){
     opts = opts || {};
-    // Se limpia el mime type (Android no acepta parámetros como ";charset=utf-8" en Intent.setType).
     var mimeCrudo = (blob && blob.type) || "application/octet-stream";
     var mime = mimeCrudo.split(";")[0].trim() || "application/octet-stream";
 
     var esNativo = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
     var FileSaver = esNativo && window.Capacitor.Plugins && window.Capacitor.Plugins.FileSaver;
 
+    // Android: no enviamos el respaldo completo por el bridge de Capacitor.
+    // Un respaldo con fotos puede superar el límite Binder y cerrar la app.
+    // Se selecciona el destino y después se escriben bloques pequeños.
     if(FileSaver){
       try{
-        var base64FS = await new Promise(function(resolve, reject){
-          var reader = new FileReader();
-          reader.onload = function(){ resolve(String(reader.result).split(",")[1] || ""); };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
+        var preparado = await FileSaver.saveFile({
+          filename: filename,
+          mimeType: mime
         });
-        var resultado = await FileSaver.saveFile({ filename: filename, mimeType: mime, data: base64FS });
-        if(resultado && resultado.saved){
-          mostrarToast("Archivo guardado en la carpeta elegida");
+
+        if(preparado && preparado.saved){
+          var CHUNK_SIZE = 32 * 1024;
+          for(var offset = 0; offset < blob.size; offset += CHUNK_SIZE){
+            var parte = blob.slice(offset, Math.min(offset + CHUNK_SIZE, blob.size));
+            var base64Parte = await new Promise(function(resolve, reject){
+              var reader = new FileReader();
+              reader.onload = function(){
+                try{
+                  var resultado = String(reader.result || "");
+                  resolve(resultado.split(",")[1] || "");
+                }catch(e){ reject(e); }
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(parte);
+            });
+
+            if(!base64Parte) throw new Error("No se pudo leer un bloque del respaldo");
+            await FileSaver.writeFileChunk({data: base64Parte});
+          }
+
+          await FileSaver.finishFile({});
+          mostrarToast("Archivo guardado correctamente (" + formatoTamano(blob.size) + ")");
           return "guardado";
         }
-        // El usuario canceló el selector de carpeta: no seguir con otras vías.
-        return "cancelado";
+
+        if(preparado && preparado.cancelled) return "cancelado";
+        throw new Error("El selector nativo no pudo preparar el archivo");
       }catch(err){
-        console.warn("El selector nativo de carpetas falló, probando otra vía", err);
+        try{
+          if(FileSaver.cancelFile) await FileSaver.cancelFile({});
+        }catch(ignore){}
+        console.error("Falló el guardado nativo por bloques:", err);
+        mostrarToast("No se pudo guardar en la carpeta elegida");
+        return "cancelado";
       }
     }
 
@@ -2379,34 +2416,7 @@
         return "guardado";
       }catch(err){
         if(err && err.name === "AbortError") return "cancelado";
-        console.warn("No se pudo usar el selector de guardado del navegador, probando otra vía", err);
-      }
-    }
-
-    if(esNativo){
-      try{
-        var base64 = await new Promise(function(resolve, reject){
-          var reader = new FileReader();
-          reader.onload = function(){ resolve(String(reader.result).split(",")[1] || ""); };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-        var Filesystem = window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem;
-        var Share = window.Capacitor.Plugins && window.Capacitor.Plugins.Share;
-        if(!Filesystem) throw new Error("Filesystem no disponible");
-        var escritura = await Filesystem.writeFile({
-          path: filename,
-          data: base64,
-          directory: "CACHE"
-        });
-        if(Share && escritura && escritura.uri){
-          await Share.share({ title: filename, url: escritura.uri, dialogTitle: "Elige dónde guardar " + filename });
-        } else {
-          mostrarToast("Archivo guardado dentro de la app");
-        }
-        return "guardado";
-      }catch(err){
-        console.warn("No se pudo guardar/compartir de forma nativa, usando descarga estándar", err);
+        console.warn("No se pudo usar el selector de guardado del navegador", err);
       }
     }
 
@@ -2414,7 +2424,6 @@
     mostrarToast("Archivo descargado");
     return "descargado";
   }
-
   /* ---------- Inicio ---------- */
   poblarSelectLotes();
   renderDashboard();
