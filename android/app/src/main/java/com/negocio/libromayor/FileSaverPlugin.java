@@ -47,7 +47,7 @@ public class FileSaverPlugin extends Plugin {
     }
 
     @ActivityCallback
-    private void saveFileResult(PluginCall call, com.getcapacitor.plugin.util.ActivityResult result) {
+    private void saveFileResult(PluginCall call, androidx.activity.result.ActivityResult result) {
         if (call == null) return;
 
         Intent resultIntent = result.getData();
